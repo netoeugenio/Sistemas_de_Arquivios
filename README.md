@@ -1,106 +1,79 @@
-Simulador de Sistema de Arquivos com Journaling
+# 📌 Simulador de Sistema de Arquivos com Journaling
 
-Este projeto é um simulador simples de sistema de arquivos feito em Java.
-A ideia é mostrar como arquivos e pastas podem ser organizados e como o journaling ajuda a não perder dados quando algo dá errado.
+## 🧰 Metodologia
+O projeto foi desenvolvido em Java, simulando operações básicas de um sistema de arquivos.  
+Cada comando é executado através de métodos, e o resultado aparece no terminal quando necessário.
 
-Metodologia
+Também foi implementado um recurso de **journaling**, que registra operações para evitar perda de dados em caso de falhas.
 
-O programa foi feito em Java e funciona como se fosse um “mini terminal”.
-Cada comando digitado representa uma ação do sistema operacional, como criar arquivos, listar pastas, renomear etc.
+---
 
-Quando alguma ação acontece, o simulador mostra na tela para o usuário saber o que ocorreu.
+## 📍 Parte 1 — Sistema de Arquivos e Journaling
 
-Parte 1 — Sistema de Arquivos e Journaling
-O que é um sistema de arquivos?
+### ✔️ O que é um sistema de arquivos?
+É o componente responsável por armazenar e organizar arquivos no disco.  
+Ele define **como os dados são guardados, identificados e encontrados**.
 
-É o responsável por guardar e organizar tudo que existe no armazenamento:
-arquivos, pastas, nomes, permissões, localização dos dados, etc.
+Sem ele, as informações seriam apenas um amontoado de bits sem utilidade.
 
-Sem ele, os dados seriam apenas bits jogados no disco sem estrutura.
+### ✔️ O que é Journaling?
+Antes de escrever no disco, o sistema **guarda a operação em um log (journal)**.  
+Se algo der errado, como falta de energia, esse log permite recuperar a ação pendente e **evitar corrupção dos dados**.
 
-O que é journaling?
+Tipos comuns:
+- **Write-ahead logging** → primeiro registra no journal, depois aplica no disco
+- **Log-structured** → dados organizados como um log contínuo
 
-Quando um sistema trava no meio de uma gravação, existe risco de perder arquivos ou deixar o disco “bagunçado”.
+A ideia principal: **manter o sistema consistente mesmo após falhas inesperadas**.
 
-O journaling evita isso porque registra as modificações antes de aplicá-las.
-Se o sistema cair, ao iniciar de novo ele usa o journal para recuperar o que faltou.
+---
 
-É o que sistemas como NTFS, EXT4 e APFS usam hoje em dia.
+## 🧱 Parte 2 — Arquitetura do Simulador
 
-Parte 2 — Arquitetura do Simulador
+### 🔹 Estruturas criadas
 
-O simulador representa:
+| Classe | Função |
+|--------|--------|
+| `File` | Representa um arquivo com nome e conteúdo |
+| `Directory` | Representa um diretório com seus itens internos |
+| `FileSystemSimulator` | Executa comandos como criar, mover, excluir, listar etc. |
+| `Journal` | Registra as operações antes de acontecerem |
 
-Componente	O que faz
-Diretório	Guarda arquivos e subpastas
-Arquivo	Guarda nome e conteúdo
-Sistema de arquivos	Administra tudo e executa os comandos
-Journal	Guarda operações pendentes para recuperar em caso de falha
+### 📁 Persistência em disco
+O simulador cria dois arquivos:
+- `fs.bin` → guarda o estado do sistema de arquivos
+- `fs.journal` → guarda operações pendentes
 
-📌 Os caminhos seguem o padrão:
-/pasta/arquivo.txt
+Ao iniciar:
+- Se existirem → tenta recuperar alterações incompletas
+- Se não existirem → o sistema começa vazio
 
-Quando o usuário digita um comando, ele altera o sistema e registra tudo no journal.
+---
 
-Parte 3 — Implementação em Java
+## 💻 Parte 3 — Implementação em Java
 
-Principais partes do código:
+A funcionalidade principal está na classe `SimpleFS.java`.
 
-Nome	Função
-SimpleFS	Classe principal que roda o simulador
-Directory	Estrutura que representa pastas
-FileEntry	Estrutura que representa arquivos
+O journaling funciona assim:
+1. Registra a alteração no arquivo `fs.journal`
+2. Executa a operação no sistema
+3. Marca a conclusão → remove do journal
 
-O journaling usa dois arquivos:
+Se o programa fechar no meio do processo:
+→ na próxima execução ele lê o journal e **reaplica as operações pendentes**.
 
-Arquivo	Função
-fs.bin	Estado atual do sistema de arquivos
-fs.journal	Lista de operações ainda não aplicadas
+---
 
-Se o programa fechar sem “sair”, ao iniciar novamente ele lê o journal e termina o que ficou pela metade.
+## ▶️ Parte 4 — Instalação e Uso
 
-Parte 4 — Como executar
-Requisitos
+### 📎 Pré-requisitos
+- Java JDK 8+ instalado
+- Código fonte na mesma pasta
 
-Ter o Java instalado na máquina
+### 🚀 Como compilar e executar
 
-Compilação
+Abra o terminal dentro da pasta do projeto:
 
-No prompt dentro da pasta do projeto:
-
+**Compilar**
+```bash
 javac SimpleFS.java
-
-Execução
-java SimpleFS
-
-
-Vai aparecer um prompt próprio do simulador:
-
->
-
-
-A partir daí, é só digitar os comandos.
-
-Exemplos rápidos de uso
-criarpasta /docs
-criararquivo /docs/nota.txt "Teste no simulador"
-listar /docs
-mostrar /docs/nota.txt
-arvore
-sair
-
-
-Depois que usar sair, os arquivos serão salvos:
-
-fs.bin → onde fica tudo que existe no sistema
-
-fs.journal → vazio quando não há falhas
-
-Se o programa fechar sem sair, ao abrir de novo ele vai avisar que está recuperando alterações.
-
-Esse passo já comprova que o journaling está funcionando.
-
-Conclusão
-
-O simulador demonstra de forma simples como um sistema de arquivos organiza dados e como o journaling ajuda a manter tudo seguro.
-Mesmo sendo pequeno, dá para entender a lógica usada em sistemas de arquivos reais.
